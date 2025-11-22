@@ -14,19 +14,19 @@
 
     #hero {
       width: 100%;
-      height: 50vh;
+      height: 25vh;
       background: linear-gradient(135deg, #0330f9 0%, #59ff00 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 60px;
+      margin-top: 45px;
       transition: opacity 0.3s ease, height 0.3s ease, margin 0.3s ease;
     }
 
     #hero.hidden {
       opacity: 0;
       height: 0;
-      margin-top: 60px;
+      margin-top: 45px;
       overflow: hidden;
     }
 
@@ -35,7 +35,7 @@
       font-family: 'Comic Sans MS', cursive, sans-serif;
       font-size: 72px;
       font-weight: bold;
-      color: white;
+      color: rgb(255, 255, 255);
       margin: 0;
       text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.3);
       letter-spacing: 2px;
@@ -47,7 +47,7 @@
       left: 0;
       width: 100%;
       background: white;
-      padding: 20px;
+      padding: 10px 20px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       z-index: 1001;
       display: flex;
@@ -58,15 +58,15 @@
     #searchContainer {
       position: relative;
       width: 100%;
-      max-width: 500px;
+      max-width: 400px;
     }
 
     #searchInput {
       width: 100%;
-      padding: 15px 20px 15px 50px;
-      font-size: 16px;
+      padding: 8px 15px 8px 40px;
+      font-size: 14px;
       border: 2px solid #e0e0e0;
-      border-radius: 30px;
+      border-radius: 20px;
       outline: none;
       transition: all 0.3s ease;
       font-family: 'Comic Sans MS', cursive, sans-serif;
@@ -79,12 +79,12 @@
 
     #searchIcon {
       position: absolute;
-      left: 18px;
+      left: 14px;
       top: 50%;
       transform: translateY(-50%);
       pointer-events: none;
-      width: 20px;
-      height: 20px;
+      width: 16px;
+      height: 16px;
     }
 
     #searchIcon svg {
@@ -122,7 +122,7 @@
       cursor: pointer;
       overflow: hidden;
       width: 300px;
-      height: 300px;
+      height: 250px;
       position: relative;
       transition: transform 0.2s, box-shadow 0.3s;
     }
@@ -145,7 +145,7 @@
 
     .label {
       position: absolute;
-      bottom: 50px;
+      bottom: 30px;
       width: 100%;
       text-align: center;
       font-size: 18px;
@@ -185,7 +185,7 @@
       </script>
 
       <button onclick="openGame1()" class="fancy-button" data-game-name="tag game">
-        <div class="screen"></div>
+        <div class="screen"><img src="images/game 1.png"></img></div>
         <div class="label">Tag game</div>
       </button>
       <script>
@@ -195,7 +195,7 @@
       </script>
 
       <button onclick="openGame2()" class="fancy-button" data-game-name="rally game">
-        <div class="screen"></div>
+        <div class="screen"><img src="images/game 2.png"></img></div>
         <div class="label">Rally game</div>
       </button>
 
@@ -206,7 +206,7 @@
       </script>
 
       <button onclick="openGame3()" class="fancy-button" data-game-name="race game">
-        <div class="screen"></div>
+        <div class="screen"><img src="images/game 3.png"></div>
         <div class="label">Race game</div>
       </button>
 
@@ -217,7 +217,7 @@
       </script>
 
       <button onclick="openGame4()" class="fancy-button" data-game-name="parkour game">
-        <div class="screen"></div>
+        <div class="screen"><img src="images/game 4.png"></div>
         <div class="label">Parkour game</div>
       </button>
 
