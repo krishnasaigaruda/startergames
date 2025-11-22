@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Race game</title>
   <style>
-     body {
-   margin: 30px 0;
+    body {
+      margin: 30px 0;
       font-family: Arial, sans-serif;
       background-color: #f9f9f9;
     }
 
     .page-title {
       text-align: center;
-    font-size: 32px;
-    font-weight: bold;
-    color: #333;
+      font-size: 32px;
+      font-weight: bold;
+      color: #333;
     }
 
     .description {
@@ -64,7 +65,7 @@
 
     .back-button {
       display: inline-block;
-      background: linear-gradient(135deg, #0330f9 0%, #f34608 100%);
+      background: linear-gradient(135deg, #0330f9 0%, #4ff308 100%);
       color: white;
       text-decoration: none;
       padding: 12px 15px;
@@ -79,8 +80,9 @@
       border: 2px solid rgba(255, 255, 255, 0.2);
     }
 
+
     .back-button:hover {
-      background: linear-gradient(135deg, #0084ff 0%, #ff9d00 100%);
+      background: linear-gradient(135deg, #0044ff 0%, #95ff00 100%);
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
     }
@@ -158,12 +160,13 @@
     }
   </style>
 </head>
+
 <body>
-    <a class="back-button" href="index.html">Back</a>
+  <a class="back-button" href="index.html">Back</a>
   <div class="page-title">game</div>
 
   <div class="description">
- Race with them to get victory!
+    Race with them to get victory!
   </div>
 
   <header>
@@ -172,138 +175,140 @@
   </header>
 
   <div id="play" class="screen active">
- Lets Race
- <div class="iframe-container">
-   <button id="fullscreenBtn3" class="fullscreen-button" onclick="toggleFullscreen('game3iframe', 'fullscreenBtn3')">⛶ Fullscreen</button>
-   <iframe id="game3iframe" src="game3source.html"></iframe>
- </div>
- <br/>
- <br/>
- <br/>
- <br/>
- <br/>
- <h3>Game Controlls</h3>
- <ul>
-   <li>WASD Momement</li>
-   <li>Arrow key can alo be used for movement</li>
-   <li>Shift for Nitro</li>
-   <li>Space for drift</li>
-   <li>R reset car to new map</li>
- </ul>
+    Lets Race
+    <div class="iframe-container">
+      <button id="fullscreenBtn3" class="fullscreen-button"
+        onclick="toggleFullscreen('game3iframe', 'fullscreenBtn3')">⛶ Fullscreen</button>
+      <iframe id="game3iframe" src="game3source.html"></iframe>
+    </div>
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+    <h3>Game Controlls</h3>
+    <ul>
+      <li>WASD Momement</li>
+      <li>Arrow key can alo be used for movement</li>
+      <li>Shift for Nitro</li>
+      <li>Space for drift</li>
+      <li>R reset car to new map</li>
+    </ul>
   </div>
 
   <div id="download" class="screen">
     Download Tag
     <div class="download-box">
-        ⬇️ Click below to generate and download the file:
-        <hr/>
-        <h3>Steps to use</h3>
-        <div style="text-align: left;">
-      <ul>
-            <li>Download</li>
-            <li>Double click on the game3source.html.zip file</li>
-            <li>when the game3source.html.zip file unzipps, double click on the
-                game1source.html file that unzipps.
-            </li>
-            <li>Enjoy!</li>
+      ⬇️ Click below to generate and download the file:
+      <hr />
+      <h3>Steps to use</h3>
+      <div style="text-align: left;">
+        <ul>
+          <li>Download</li>
+          <li>Double click on the game3source.html.zip file</li>
+          <li>when the game3source.html.zip file unzipps, double click on the
+            game1source.html file that unzipps.
+          </li>
+          <li>Enjoy!</li>
         </ul>
-    </div>
-        <h3>If you are using in your website, pls give credit under game</h3>
-        <br><br>
-        <button class="download-link" onclick="downloadFile()">Download Racing.html</button>
-      
-
       </div>
-      
-      <style>
-        .download-box {
-          margin-top: 40px;
-          text-align: center;
-          font-size: 18px;
-        }
-      
-        .download-link {
-          background: linear-gradient(135deg, #2196F3, #1976D2);
-          color: white;
-          padding: 14px 26px;
-          font-size: 18px;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-      
-        .download-link:hover {
-          background: linear-gradient(135deg, #1976D2, #0D47A1);
-          transform: scale(1.05);
-        }
-      </style>
-      
-      <script>
-        function downloadFile() {
-         
-      
-          const link = document.createElement('a');
-          link.href = "game3source.html.zip";
-          link.download = 'Racing.html';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        }
-      </script>
-      
+      <h3>If you are using in your website, pls give credit under game</h3>
+      <br><br>
+      <button class="download-link" onclick="downloadFile()">Download Racing.html</button>
 
-  <script>
-    function showScreen(screenId) {
-      document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.remove('active');
-      });
-      document.getElementById(screenId).classList.add('active');
-    }
 
-    function toggleFullscreen(iframeId, buttonId) {
-      const iframe = document.getElementById(iframeId);
-      const container = iframe.parentElement;
-      const button = document.getElementById(buttonId);
+    </div>
 
-      if (!document.fullscreenElement) {
-        if (container.requestFullscreen) {
-          container.requestFullscreen();
-        } else if (container.webkitRequestFullscreen) { // Safari
-          container.webkitRequestFullscreen();
-        } else if (container.msRequestFullscreen) { // IE11
-          container.msRequestFullscreen();
-        }
-        button.textContent = '⛶ Exit Fullscreen';
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-        button.textContent = '⛶ Fullscreen';
+    <style>
+      .download-box {
+        margin-top: 40px;
+        text-align: center;
+        font-size: 18px;
       }
-    }
 
-    // Listen for fullscreen changes (e.g., when user presses ESC)
-    document.addEventListener('fullscreenchange', function() {
-      const button = document.getElementById('fullscreenBtn3');
-      if (button) {
+      .download-link {
+        background: linear-gradient(135deg, #2196F3, #1976D2);
+        color: white;
+        padding: 14px 26px;
+        font-size: 18px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .download-link:hover {
+        background: linear-gradient(135deg, #1976D2, #0D47A1);
+        transform: scale(1.05);
+      }
+    </style>
+
+    <script>
+      function downloadFile() {
+
+
+        const link = document.createElement('a');
+        link.href = "game3source.html.zip";
+        link.download = 'Racing.html';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    </script>
+
+
+    <script>
+      function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(screen => {
+          screen.classList.remove('active');
+        });
+        document.getElementById(screenId).classList.add('active');
+      }
+
+      function toggleFullscreen(iframeId, buttonId) {
+        const iframe = document.getElementById(iframeId);
+        const container = iframe.parentElement;
+        const button = document.getElementById(buttonId);
+
         if (!document.fullscreenElement) {
+          if (container.requestFullscreen) {
+            container.requestFullscreen();
+          } else if (container.webkitRequestFullscreen) { // Safari
+            container.webkitRequestFullscreen();
+          } else if (container.msRequestFullscreen) { // IE11
+            container.msRequestFullscreen();
+          }
+          button.textContent = '⛶ Exit Fullscreen';
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
           button.textContent = '⛶ Fullscreen';
         }
       }
-    });
 
-    document.addEventListener('webkitfullscreenchange', function() {
-      const button = document.getElementById('fullscreenBtn3');
-      if (button) {
-        if (!document.webkitFullscreenElement) {
-          button.textContent = '⛶ Fullscreen';
+      // Listen for fullscreen changes (e.g., when user presses ESC)
+      document.addEventListener('fullscreenchange', function () {
+        const button = document.getElementById('fullscreenBtn3');
+        if (button) {
+          if (!document.fullscreenElement) {
+            button.textContent = '⛶ Fullscreen';
+          }
         }
-      }
-    });
-  </script>
+      });
+
+      document.addEventListener('webkitfullscreenchange', function () {
+        const button = document.getElementById('fullscreenBtn3');
+        if (button) {
+          if (!document.webkitFullscreenElement) {
+            button.textContent = '⛶ Fullscreen';
+          }
+        }
+      });
+    </script>
 
 </body>
+
 </html>

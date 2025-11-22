@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Games</title>
@@ -14,7 +15,7 @@
     #hero {
       width: 100%;
       height: 50vh;
-      background: linear-gradient(135deg, #0330f9 0%, #f34608 100%);
+      background: linear-gradient(135deg, #0330f9 0%, #59ff00 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -135,7 +136,7 @@
       background: linear-gradient(to bottom right, #ffffff, #e0e0e0);
       border-radius: 15px;
       height: 140px;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
       position: absolute;
       left: 14px;
       top: 30px;
@@ -155,6 +156,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <div id="header">
@@ -174,52 +176,52 @@
   </div>
 
   <div id="gamesWrapper">
-  <div id="gamesContainer">
+    <div id="gamesContainer">
 
-  <script>
-    function openGame1() {
-      window.location.href = "Game1.html"; // Open in same tab
-    }
-  </script>
+      <script>
+        function openGame1() {
+          window.location.href = "Game1.html"; // Open in same tab
+        }
+      </script>
 
-  <button onclick="openGame1()" class="fancy-button" data-game-name="tag game">
-    <div class="screen"></div>
-    <div class="label">Tag game</div>
-  </button>
-  <script>
-    function openGame2() {
-      window.location.href = "Game2.html"; // Open in same tab
-    }
-  </script>
+      <button onclick="openGame1()" class="fancy-button" data-game-name="tag game">
+        <div class="screen"></div>
+        <div class="label">Tag game</div>
+      </button>
+      <script>
+        function openGame2() {
+          window.location.href = "Game2.html"; // Open in same tab
+        }
+      </script>
 
-  <button onclick="openGame2()" class="fancy-button" data-game-name="rally game">
-    <div class="screen"></div>
-    <div class="label">Rally game</div>
-  </button>
+      <button onclick="openGame2()" class="fancy-button" data-game-name="rally game">
+        <div class="screen"></div>
+        <div class="label">Rally game</div>
+      </button>
 
-  <script>
-    function openGame3() {
-      window.location.href = "Game3.html"; // Open in same tab
-    }
-  </script>
+      <script>
+        function openGame3() {
+          window.location.href = "Game3.html"; // Open in same tab
+        }
+      </script>
 
-  <button onclick="openGame3()" class="fancy-button" data-game-name="race game">
-    <div class="screen"></div>
-    <div class="label">Race game</div>
-  </button>
+      <button onclick="openGame3()" class="fancy-button" data-game-name="race game">
+        <div class="screen"></div>
+        <div class="label">Race game</div>
+      </button>
 
-  <script>
-    function openGame4() {
-      window.location.href = "Game4.html"; // Open in same tab
-    }
-  </script>
+      <script>
+        function openGame4() {
+          window.location.href = "Game4.html"; // Open in same tab
+        }
+      </script>
 
-  <button onclick="openGame4()" class="fancy-button" data-game-name="parkour game">
-    <div class="screen"></div>
-    <div class="label">Parkour game</div>
-  </button>
+      <button onclick="openGame4()" class="fancy-button" data-game-name="parkour game">
+        <div class="screen"></div>
+        <div class="label">Parkour game</div>
+      </button>
 
-  </div>
+    </div>
   </div>
 
   <script>
@@ -236,7 +238,8 @@
       }
 
       gameButtons.forEach(button => {
-        const gameName = button.getAttribute('data-game-name') || button.querySelector('.label').textContent.toLowerCase();
+        const gameName = button.getAttribute('data-game-name') || button.querySelector('.label').textContent
+          .toLowerCase();
 
         if (gameName.includes(searchTerm)) {
           button.style.display = 'inline-block';
@@ -245,8 +248,8 @@
         }
       });
     }
-
   </script>
- 
+
 </body>
+
 </html>
