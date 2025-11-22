@@ -128,6 +128,68 @@ keeps the same styles just change file names.
       content: "← ";
       font-size: 18px;
     }
+
+    .iframe-container {
+      position: relative;
+      width: 100%;
+      height: 800px;
+    }
+
+    .iframe-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .iframe-container:fullscreen {
+      width: 100vw;
+      height: 100vh;
+      background: black;
+    }
+
+    .iframe-container:-webkit-full-screen {
+      width: 100vw;
+      height: 100vh;
+      background: black;
+    }
+
+    .iframe-container:fullscreen iframe {
+      width: 100%;
+      height: 100%;
+    }
+
+    .iframe-container:-webkit-full-screen iframe {
+      width: 100%;
+      height: 100%;
+    }
+
+    .fullscreen-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #87CEEB;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      z-index: 9999;
+    }
+
+    .fullscreen-button:hover {
+      background: #6BB6D6;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .fullscreen-button:active {
+      transform: translateY(0px);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -146,7 +208,10 @@ keeps the same styles just change file names.
 
   <div id="play" class="screen active">
  Lets play game
-<iframe src="game3source.html" width="100%" height="800px"></iframe>
+ <div class="iframe-container">
+   <button id="fullscreenBtn1" class="fullscreen-button" onclick="toggleFullscreen('game1iframe', 'fullscreenBtn1')">⛶ Fullscreen</button>
+   <iframe id="game1iframe" src="game3source.html"></iframe>
+ </div>
  <br/>
 <br/>
 <br/>
@@ -229,6 +294,47 @@ keeps the same styles just change file names.
       });
       document.getElementById(screenId).classList.add('active');
     }
+
+    function toggleFullscreen(iframeId, buttonId) {
+      const iframe = document.getElementById(iframeId);
+      const container = iframe.parentElement;
+      const button = document.getElementById(buttonId);
+
+      if (!document.fullscreenElement) {
+        if (container.requestFullscreen) {
+          container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) { // Safari
+          container.webkitRequestFullscreen();
+        } else if (container.msRequestFullscreen) { // IE11
+          container.msRequestFullscreen();
+        }
+        button.textContent = '⛶ Exit Fullscreen';
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+        button.textContent = '⛶ Fullscreen';
+      }
+    }
+
+    // Listen for fullscreen changes (e.g., when user presses ESC)
+    document.addEventListener('fullscreenchange', function() {
+      const button = document.getElementById('fullscreenBtn1');
+      if (button) {
+        if (!document.fullscreenElement) {
+          button.textContent = '⛶ Fullscreen';
+        }
+      }
+    });
+
+    document.addEventListener('webkitfullscreenchange', function() {
+      const button = document.getElementById('fullscreenBtn1');
+      if (button) {
+        if (!document.webkitFullscreenElement) {
+          button.textContent = '⛶ Fullscreen';
+        }
+      }
+    });
   </script>
 
 </body>
