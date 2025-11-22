@@ -8,37 +8,27 @@
       margin: 0;
       padding: 0;
       overflow-x: hidden;
+      scroll-behavior: smooth;
     }
 
     #hero {
-      position: fixed;
-      top: 75px;
-      left: 0;
       width: 100%;
-      height: 25vh;
+      height: 50vh;
       background: linear-gradient(135deg, #0330f9 0%, #f34608 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 998;
-      transition: transform 0.3s ease, opacity 0.3s ease;
-    }
-
-    #hero::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 60px;
-      background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(255,255,255,0.8) 70%, rgba(255,255,255,1) 100%);
-      pointer-events: none;
+      margin-top: 60px;
+      transition: opacity 0.3s ease, height 0.3s ease, margin 0.3s ease;
     }
 
     #hero.hidden {
-      transform: translateY(-100%);
       opacity: 0;
+      height: 0;
+      margin-top: 60px;
+      overflow: hidden;
     }
+
 
     #hero h1 {
       font-family: 'Comic Sans MS', cursive, sans-serif;
@@ -72,7 +62,7 @@
 
     #searchInput {
       width: 100%;
-      padding: 15px 50px 15px 20px;
+      padding: 15px 20px 15px 50px;
       font-size: 16px;
       border: 2px solid #e0e0e0;
       border-radius: 30px;
@@ -88,12 +78,21 @@
 
     #searchIcon {
       position: absolute;
-      right: 20px;
+      left: 18px;
       top: 50%;
       transform: translateY(-50%);
-      color: #999;
-      font-size: 20px;
       pointer-events: none;
+      width: 20px;
+      height: 20px;
+    }
+
+    #searchIcon svg {
+      width: 100%;
+      height: 100%;
+      stroke: #999;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
     }
 
     #gamesContainer {
@@ -106,14 +105,8 @@
     }
 
     #gamesWrapper {
-      margin-top: calc(75px + 25vh);
-      transition: margin-top 0.3s ease;
       background: white;
       position: relative;
-    }
-
-    #gamesWrapper.hero-hidden {
-      margin-top: 75px;
     }
 
     .fancy-button {
@@ -167,7 +160,12 @@
   <div id="header">
     <div id="searchContainer">
       <input type="text" id="searchInput" placeholder="Search games..." oninput="searchGames()">
-      <span id="searchIcon">🔍</span>
+      <span id="searchIcon">
+        <svg viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m22 22-5-5"></path>
+        </svg>
+      </span>
     </div>
   </div>
 
@@ -228,6 +226,14 @@
     function searchGames() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
       const gameButtons = document.querySelectorAll('.fancy-button');
+      const hero = document.getElementById('hero');
+
+      // Hide or show hero based on search input
+      if (searchTerm.length > 0) {
+        hero.classList.add('hidden');
+      } else {
+        hero.classList.remove('hidden');
+      }
 
       gameButtons.forEach(button => {
         const gameName = button.getAttribute('data-game-name') || button.querySelector('.label').textContent.toLowerCase();
@@ -240,24 +246,7 @@
       });
     }
 
-    let lastScrollTop = 0;
-    const hero = document.getElementById('hero');
-    const content = document.getElementById('gamesWrapper');
-
-    window.addEventListener('scroll', function() {
-      let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
-      if (scrollTop > 50) {
-        hero.classList.add('hidden');
-        content.classList.add('hero-hidden');
-      } else {
-        hero.classList.remove('hidden');
-        content.classList.remove('hero-hidden');
-      }
-
-      lastScrollTop = scrollTop;
-    });
   </script>
-
+ 
 </body>
 </html>
