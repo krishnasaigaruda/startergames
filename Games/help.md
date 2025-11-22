@@ -40,18 +40,17 @@ keeps the same styles just change file names.
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>game</title>
   <style>
-    body {
-      margin: 0;
+     body {
+   margin: 30px 0;
       font-family: Arial, sans-serif;
       background-color: #f9f9f9;
     }
 
     .page-title {
       text-align: center;
-      font-size: 32px;
-      font-weight: bold;
-      padding-top: 30px;
-      color: #333;
+    font-size: 32px;
+    font-weight: bold;
+    color: #333;
     }
 
     .description {
