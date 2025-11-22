@@ -3,7 +3,7 @@ Games i am creating using three.js
 
 # next update
 
-4 new games arriving 
+Minecraft game coming soon!
 
 # next game
 

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tag Game</title>
+  <style>
+    body {
+      background: #ecf0f1;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 40px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="tagGamer" style="width: 1000px; margin: auto; user-select:none;"></div>
+
+<script>
+(() => {
+  const container = document.getElementById('tagGamer');
+  container.innerHTML = '';
+
+  const WIDTH = 1000, HEIGHT = 600;
+  const canvas = document.createElement('canvas');
+  canvas.width = WIDTH;
+  canvas.height = HEIGHT;
+  container.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+
+  // Info displays
+  const infoDiv = document.createElement('div');
+  infoDiv.style.textAlign = 'center';
+  infoDiv.style.color = '#2c3e50';
+  infoDiv.style.fontWeight = '700';
+  infoDiv.style.fontSize = '24px';
+  infoDiv.style.margin = '12px 0 6px 0';
+  container.appendChild(infoDiv);
+
+  const timerDiv = document.createElement('div');
+  timerDiv.style.textAlign = 'center';
+  timerDiv.style.color = '#27ae60';
+  timerDiv.style.fontWeight = '700';
+  timerDiv.style.fontSize = '22px';
+  timerDiv.style.marginBottom = '16px';
+  container.appendChild(timerDiv);
+
+  const endMessageDiv = document.createElement('div');
+  endMessageDiv.style.position = 'absolute';
+  endMessageDiv.style.top = '50%';
+  endMessageDiv.style.left = '50%';
+  endMessageDiv.style.transform = 'translate(-50%, -50%)';
+  endMessageDiv.style.background = 'rgba(255,255,255,0.95)';
+  endMessageDiv.style.padding = '40px 60px';
+  endMessageDiv.style.fontSize = '36px';
+  endMessageDiv.style.fontWeight = '800';
+  endMessageDiv.style.borderRadius = '15px';
+  endMessageDiv.style.boxShadow = '0 0 15px rgba(0,0,0,0.25)';
+  endMessageDiv.style.color = '#34495e';
+  endMessageDiv.style.display = 'none';
+  container.style.position = 'relative';
+  container.appendChild(endMessageDiv);
+
+  // Constants
+  const PLAYER_SIZE = 36;
+  const TAG_ITEM_LENGTH = 35;
+  const TAG_ITEM_RADIUS = 14;
+  const HUMAN_SPEED = 4;
+  const AI_SPEED = 3;
+  const GAME_DURATION = 120; // seconds
+  const TAGGER_COOLDOWN = 5000; // 5 seconds cooldown before can tag others
+
+  // Keyboard state
+  const keys = {};
+  window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
+  window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+  // Distance helper
+  function dist(x1, y1, x2, y2) {
+    return Math.hypot(x2 - x1, y2 - y1);
+  }
+
+  // Player class
+  class Player {
+    constructor(id, name, x, y, color, isHuman = false) {
+      this.id = id;
+      this.name = name;
+      this.x = x;
+      this.y = y;
+      this.color = color;
+      this.isHuman = isHuman;
+      this.isTagger = false;
+      this.tagItemAngle = 0;
+      this.speed = isHuman ? HUMAN_SPEED : AI_SPEED;
+      this.direction = { x: 0, y: 0 };
+      this.changeDirTimer = 0;
+      this.moveCooldown = 0;
+      this.tagStartTime = 0; // Timestamp when became tagger
+    }
+
+    draw() {
+      // Body
+      ctx.fillStyle = this.color;
+      ctx.shadowColor = 'rgba(0,0,0,0.25)';
+      ctx.shadowBlur = 5;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, PLAYER_SIZE / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Eyes
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(this.x - 9, this.y - 8, 6, 0, Math.PI * 2);
+      ctx.arc(this.x + 9, this.y - 8, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = 'black';
+      ctx.beginPath();
+      ctx.arc(this.x - 9, this.y - 8, 3, 0, Math.PI * 2);
+      ctx.arc(this.x + 9, this.y - 8, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Smile
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y + 8, 13, 0, Math.PI, false);
+      ctx.stroke();
+
+      // Name
+      ctx.font = '16px Verdana';
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.textAlign = 'center';
+      ctx.fillText(this.name, this.x, this.y + PLAYER_SIZE);
+
+      // Tag item
+      if (this.isTagger) {
+        this.tagItemAngle += 0.18;
+        const angle = this.tagItemAngle;
+        const tagX = this.x + Math.cos(angle) * TAG_ITEM_LENGTH;
+        const tagY = this.y + Math.sin(angle) * TAG_ITEM_LENGTH;
+
+        ctx.strokeStyle = '#b22222';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(tagX, tagY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#e74c3c';
+        ctx.shadowColor = '#e74c3c';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(tagX, tagY, TAG_ITEM_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    move() {
+      let newX = this.x;
+      let newY = this.y;
+
+      if (this.isHuman) {
+        let dx = 0, dy = 0;
+        if (keys.arrowup || keys.w) dy -= this.speed;
+        if (keys.arrowdown || keys.s) dy += this.speed;
+        if (keys.arrowleft || keys.a) dx -= this.speed;
+        if (keys.arrowright || keys.d) dx += this.speed;
+
+        if (dx !== 0 && dy !== 0) {
+          dx *= Math.SQRT1_2;
+          dy *= Math.SQRT1_2;
+        }
+
+        newX = this.x + dx;
+        newY = this.y + dy;
+      } else {
+        if (this.moveCooldown > 0) {
+          this.moveCooldown--;
+          return;
+        }
+
+        if (this.isTagger) {
+          // Tagger AI: chase closest non-tagger
+          let target = players.filter(p => !p.isTagger);
+          if (target.length > 0) {
+            target = target.reduce((prev, curr) =>
+              dist(this.x, this.y, curr.x, curr.y) < dist(this.x, this.y, prev.x, prev.y) ? curr : prev
+            );
+            let dx = target.x - this.x;
+            let dy = target.y - this.y;
+            let len = Math.hypot(dx, dy) || 1;
+            dx /= len;
+            dy /= len;
+            newX = this.x + dx * this.speed;
+            newY = this.y + dy * this.speed;
+          }
+          if (Math.random() < 0.01) this.moveCooldown = 10;
+        } else {
+          this.changeDirTimer--;
+          if (this.changeDirTimer <= 0) {
+            this.direction = { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 };
+            const len = Math.hypot(this.direction.x, this.direction.y) || 1;
+            this.direction.x /= len;
+            this.direction.y /= len;
+            this.changeDirTimer = 60 + Math.floor(Math.random() * 60);
+          }
+          const tagger = players.find(p => p.isTagger);
+          if (tagger) {
+            const d = dist(this.x, this.y, tagger.x, tagger.y);
+            if (d < 200) {
+              let dx = this.x - tagger.x;
+              let dy = this.y - tagger.y;
+              const len = Math.hypot(dx, dy) || 1;
+              dx /= len;
+              dy /= len;
+              newX = this.x + dx * this.speed * 1.5;
+              newY = this.y + dy * this.speed * 1.5;
+            } else {
+              newX = this.x + this.direction.x * this.speed;
+              newY = this.y + this.direction.y * this.speed;
+            }
+          } else {
+            newX = this.x + this.direction.x * this.speed;
+            newY = this.y + this.direction.y * this.speed;
+          }
+        }
+      }
+
+      // Boundaries only
+      newX = Math.min(Math.max(newX, PLAYER_SIZE / 2), WIDTH - PLAYER_SIZE / 2);
+      newY = Math.min(Math.max(newY, PLAYER_SIZE / 2), HEIGHT - PLAYER_SIZE / 2);
+
+      this.x = newX;
+      this.y = newY;
+    }
+  }
+
+  // Draw garden background (just grass)
+  function drawGarden() {
+    ctx.fillStyle = '#71b370';
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  }
+
+  // Initialize players
+  const players = [];
+  players.push(new Player('P1', 'You', 80, 550, '#3498db', true));
+
+  const colors = ['#e67e22', '#9b59b6', '#e74c3c', '#2ecc71'];
+  const names = ['Alex', 'Sam', 'Jo', 'Taylor'];
+
+  for (let i = 0; i < 4; i++) {
+    const px = 300 + i * 140;
+    const py = 200 + (i % 2) * 250;
+    players.push(new Player('AI' + (i + 1), names[i], px, py, colors[i], false));
+  }
+
+  const taggerIndex = Math.floor(Math.random() * players.length);
+  players[taggerIndex].isTagger = true;
+  players[taggerIndex].tagStartTime = Date.now();
+
+  let gameStartTime = Date.now();
+  let gameOver = false;
+
+  function gameLoop() {
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+    drawGarden();
+
+    if (!gameOver) {
+      for (const p of players) {
+        p.move();
+      }
+
+      const tagger = players.find(p => p.isTagger);
+      if (tagger) {
+        const now = Date.now();
+        const canTag = (now - tagger.tagStartTime) >= TAGGER_COOLDOWN;
+
+        if (canTag) {
+          const angle = tagger.tagItemAngle;
+          const tagX = tagger.x + Math.cos(angle) * TAG_ITEM_LENGTH;
+          const tagY = tagger.y + Math.sin(angle) * TAG_ITEM_LENGTH;
+
+          for (const p of players) {
+            if (p !== tagger) {
+              if (dist(tagX, tagY, p.x, p.y) < (PLAYER_SIZE / 2 + TAG_ITEM_RADIUS)) {
+                tagger.isTagger = false;
+                p.isTagger = true;
+                p.tagStartTime = now;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      for (const p of players) {
+        p.draw();
+      }
+
+      let elapsed = (Date.now() - gameStartTime) / 1000;
+      let remaining = Math.max(0, GAME_DURATION - elapsed);
+      timerDiv.textContent = `Time left: ${remaining.toFixed(1)}s`;
+      infoDiv.textContent = 'Tagger: ' + (players.find(p => p.isTagger)?.name || 'None');
+
+      if (remaining <= 0) {
+        gameOver = true;
+        let taggerPlayer = players.find(p => p.isTagger);
+        endMessageDiv.textContent = taggerPlayer
+          ? `Game over! ${taggerPlayer.name} is "It"!`
+          : 'Game over! No tagger found.';
+        endMessageDiv.style.display = 'block';
+      }
+    }
+
+    if (!gameOver) requestAnimationFrame(gameLoop);
+  }
+
+  gameLoop();
+})();
+</script>
+
+</body>
+</html>

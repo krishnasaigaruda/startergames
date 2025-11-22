@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Parkour Game</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        overflow: hidden;
+        font-family: "Arial", sans-serif;
+        background: #000;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1;
+      }
+
+      #ui {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        color: white;
+        font-size: 16px;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 15px;
+        border-radius: 8px;
+        z-index: 1000;
+        pointer-events: none;
+      }
+
+      #victoryScreen {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px 60px;
+        border-radius: 20px;
+        text-align: center;
+        color: white;
+        z-index: 2000;
+        display: none;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      #victoryScreen h1 {
+        font-size: 48px;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      #victoryScreen p {
+        font-size: 24px;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="ui">
+      <div>Speed: <span id="speed">0</span></div>
+      <div>Height: <span id="height">0</span></div>
+      <div>Checkpoint: <span id="checkpoint">0</span>/15</div>
+      <div>Best Height: <span id="bestHeight">0</span></div>
+      <div style="margin-top: 10px; font-size: 12px; opacity: 0.8">
+        WASD: Move | SPACE: Jump | SHIFT: Sprint | F5: Toggle View
+      </div>
+    </div>
+
+    <div id="victoryScreen">
+      <h1>🎉 Victory! 🎉</h1>
+      <p>You completed the parkour course!</p>
+      <p>Course complete! Great job!</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
+
+    <script>
+      // Check if libraries loaded
+      if (typeof THREE === "undefined") {
+        document.body.innerHTML =
+          '<div style="color: white; padding: 20px;">Error: Three.js failed to load</div>';
+      }
+      if (typeof CANNON === "undefined") {
+        document.body.innerHTML =
+          '<div style="color: white; padding: 20px;">Error: Cannon.js failed to load</div>';
+      }
+    </script>
+
+    <script>
+      // Game variables
+      let scene, camera, renderer, world;
+      let playerBody, playerMesh;
+      let leftArm, rightArm, leftLeg, rightLeg; // For animation
+      let playerHead, playerHair; // For head rotation
+      let walkCycle = 0;
+      let keys = {};
+      let canJump = true;
+      let isSprinting = false;
+      let checkpoints = 0;
+      let bestHeight = 0;
+      let courseCompleted = false;
+      let isThirdPerson = false;
+      let moveForward = 0,
+        moveRight = 0;
+      let velocity = new THREE.Vector3();
+      let direction = new THREE.Vector3();
+
+      // Camera rotation
+      let euler = new THREE.Euler(0, 0, 0, "YXZ");
+      let PI_2 = Math.PI / 2;
+
+      // Constants
+      const WALK_SPEED = 11;
+      const SPRINT_SPEED = 14;
+      const JUMP_VELOCITY = 9;
+      const GRAVITY = -35;
+
+      // Initialize everything
+      function init() {
+        try {
+          console.log("Initializing game...");
+
+          // Create scene with gradient background
+          scene = new THREE.Scene();
+
+          // Create sky gradient background
+          const canvas = document.createElement("canvas");
+          canvas.width = 512;
+          canvas.height = 512;
+          const context = canvas.getContext("2d");
+
+          // Create gradient from top to bottom (sky blue to horizon orange/pink)
+          const gradient = context.createLinearGradient(0, 0, 0, 512);
+          gradient.addColorStop(0, "#001a33"); // Deep blue at top
+          gradient.addColorStop(0.3, "#1e5799"); // Sky blue
+          gradient.addColorStop(0.7, "#87ceeb"); // Light blue
+          gradient.addColorStop(1, "#ffd89b"); // Warm horizon
+
+          context.fillStyle = gradient;
+          context.fillRect(0, 0, 512, 512);
+
+          const backgroundTexture = new THREE.CanvasTexture(canvas);
+          scene.background = backgroundTexture;
+          scene.fog = new THREE.Fog(0x87ceeb, 50, 250);
+          console.log("Scene created");
+
+          // Create camera
+          camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+          );
+          camera.position.set(0, 3, 0);
+          console.log("Camera created");
+
+          // Create renderer
+          renderer = new THREE.WebGLRenderer({ antialias: true });
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          renderer.shadowMap.enabled = true;
+          renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+          document.body.appendChild(renderer.domElement);
+          console.log("Renderer created and appended");
+
+          // Lighting
+          const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+          scene.add(ambientLight);
+
+          const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+          sunLight.position.set(50, 50, 25);
+          sunLight.castShadow = true;
+          sunLight.shadow.mapSize.width = 2048;
+          sunLight.shadow.mapSize.height = 2048;
+          sunLight.shadow.camera.far = 200;
+          sunLight.shadow.camera.left = -50;
+          sunLight.shadow.camera.right = 50;
+          sunLight.shadow.camera.top = 50;
+          sunLight.shadow.camera.bottom = -50;
+          scene.add(sunLight);
+
+          // Physics world
+          world = new CANNON.World();
+          world.gravity.set(0, GRAVITY, 0);
+          world.broadphase = new CANNON.NaiveBroadphase();
+          world.solver.iterations = 20;
+          world.defaultContactMaterial.contactEquationStiffness = 1e9;
+          world.defaultContactMaterial.contactEquationRelaxation = 4;
+          world.defaultContactMaterial.friction = 0;
+          world.defaultContactMaterial.restitution = 0;
+
+          // Create ground
+          createGround();
+
+          // Create background trees
+          createTrees();
+
+          // Create player
+          createPlayer();
+
+          // Create parkour course
+          createParkourCourse();
+
+          // Event listeners
+          document.addEventListener("keydown", onKeyDown);
+          document.addEventListener("keyup", onKeyUp);
+          document.addEventListener("mousemove", onMouseMove);
+          window.addEventListener("resize", onWindowResize);
+
+          // Pointer lock
+          document.body.addEventListener("click", () => {
+            document.body.requestPointerLock();
+          });
+
+          // Start animation loop
+          animate();
+          console.log("Game initialized successfully");
+        } catch (error) {
+          console.error("Initialization error:", error);
+          document.body.innerHTML =
+            '<div style="color: white; padding: 20px;">Error initializing game: ' +
+            error.message +
+            "</div>";
+        }
+      }
+
+      function createGround() {
+        // Visual ground
+        const groundGeometry = new THREE.PlaneGeometry(200, 200);
+        const groundMaterial = new THREE.MeshStandardMaterial({
+          color: 0x3a7d3a,
+          roughness: 0.8,
+          metalness: 0.2,
+        });
+        const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+        groundMesh.rotation.x = -Math.PI / 2;
+        groundMesh.receiveShadow = true;
+        scene.add(groundMesh);
+
+        // Physics ground
+        const groundShape = new CANNON.Plane();
+        const groundBody = new CANNON.Body({ mass: 0 });
+        groundBody.addShape(groundShape);
+        groundBody.quaternion.setFromAxisAngle(
+          new CANNON.Vec3(1, 0, 0),
+          -Math.PI / 2
+        );
+        world.addBody(groundBody);
+      }
+
+      function createTrees() {
+        // Create scattered trees in the background
+        const treePositions = [
+          [-30, 0, -10], [-35, 0, 5], [-40, 0, -20], [-25, 0, 15],
+          [30, 0, -15], [35, 0, 0], [40, 0, -25], [32, 0, 10],
+          [-30, 0, 30], [-38, 0, 45], [-32, 0, 60], [-40, 0, 75],
+          [30, 0, 35], [38, 0, 50], [35, 0, 65], [40, 0, 80],
+          [-45, 0, -5], [45, 0, -10], [-28, 0, 25], [28, 0, 28]
+        ];
+
+        treePositions.forEach(([x, y, z]) => {
+          createTree(x, y, z);
+        });
+      }
+
+      function createTree(x, y, z) {
+        const treeGroup = new THREE.Group();
+
+        // Tree trunk
+        const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.4, 4, 8);
+        const trunkMaterial = new THREE.MeshStandardMaterial({
+          color: 0x4a2511,
+          roughness: 0.9
+        });
+        const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+        trunk.position.y = 2;
+        trunk.castShadow = true;
+        treeGroup.add(trunk);
+
+        // Tree foliage (multiple spheres for bushy look)
+        const foliageMaterial = new THREE.MeshStandardMaterial({
+          color: 0x228B22,
+          roughness: 0.8
+        });
+
+        // Bottom foliage layer
+        const foliage1 = new THREE.Mesh(
+          new THREE.SphereGeometry(2, 8, 8),
+          foliageMaterial
+        );
+        foliage1.position.y = 4;
+        foliage1.castShadow = true;
+        treeGroup.add(foliage1);
+
+        // Middle foliage layer
+        const foliage2 = new THREE.Mesh(
+          new THREE.SphereGeometry(1.5, 8, 8),
+          foliageMaterial
+        );
+        foliage2.position.y = 5.5;
+        foliage2.castShadow = true;
+        treeGroup.add(foliage2);
+
+        // Top foliage layer
+        const foliage3 = new THREE.Mesh(
+          new THREE.SphereGeometry(1, 8, 8),
+          foliageMaterial
+        );
+        foliage3.position.y = 6.5;
+        foliage3.castShadow = true;
+        treeGroup.add(foliage3);
+
+        treeGroup.position.set(x, y, z);
+        scene.add(treeGroup);
+      }
+
+      function createPlayer() {
+        // Create zero friction material for player
+        const playerMaterial = new CANNON.Material("playerMaterial");
+        playerMaterial.friction = 0;
+        playerMaterial.restitution = 0;
+
+        // Player physics body (box collider for better collision)
+        const playerShape = new CANNON.Box(new CANNON.Vec3(0.4, 0.9, 0.4));
+        playerBody = new CANNON.Body({
+          mass: 70,
+          linearDamping: 0,
+          angularDamping: 0.9,
+          fixedRotation: true,
+          material: playerMaterial,
+        });
+        playerBody.addShape(playerShape);
+        playerBody.position.set(0, 1.5, -5);
+
+        world.addBody(playerBody);
+
+        // Player visual (simple humanoid representation)
+        const playerGroup = new THREE.Group();
+
+        // Body (using cylinder instead of capsule for compatibility)
+        const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.3, 1, 16);
+        const bodyMaterial = new THREE.MeshStandardMaterial({
+          color: 0x2196f3,
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.castShadow = true;
+        playerGroup.add(body);
+
+        // Head - stored globally for rotation
+        const headGeometry = new THREE.SphereGeometry(0.25, 16, 16);
+        const headMaterial = new THREE.MeshStandardMaterial({
+          color: 0xffdbac,
+        });
+        playerHead = new THREE.Mesh(headGeometry, headMaterial);
+        playerHead.position.y = 0.75;
+        playerHead.castShadow = true;
+        playerGroup.add(playerHead);
+
+        // Hair (on top of head) - stored globally for rotation
+        const hairGeometry = new THREE.SphereGeometry(0.28, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+        const hairMaterial = new THREE.MeshStandardMaterial({
+          color: 0x3d2817, // Dark brown
+          roughness: 0.9,
+        });
+        playerHair = new THREE.Mesh(hairGeometry, hairMaterial);
+        playerHair.position.y = 0.75;
+        playerHair.castShadow = true;
+        playerGroup.add(playerHair);
+
+        // Arms (simple cylinders) - stored globally for animation
+        const armGeometry = new THREE.CylinderGeometry(0.08, 0.08, 0.6, 8);
+        const armMaterial = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+
+        leftArm = new THREE.Mesh(armGeometry, armMaterial);
+        leftArm.position.set(-0.4, 0.1, 0);
+        leftArm.castShadow = true;
+        playerGroup.add(leftArm);
+
+        rightArm = new THREE.Mesh(armGeometry, armMaterial);
+        rightArm.position.set(0.4, 0.1, 0);
+        rightArm.castShadow = true;
+        playerGroup.add(rightArm);
+
+        // Legs - stored globally for animation
+        const legGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.6, 8);
+        const legMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+
+        leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+        leftLeg.position.set(-0.15, -0.6, 0);
+        leftLeg.castShadow = true;
+        playerGroup.add(leftLeg);
+
+        rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+        rightLeg.position.set(0.15, -0.6, 0);
+        rightLeg.castShadow = true;
+        playerGroup.add(rightLeg);
+
+        playerMesh = playerGroup;
+        scene.add(playerMesh);
+      }
+
+      function createParkourCourse() {
+        const platformMaterial = new THREE.MeshStandardMaterial({
+          color: 0x8b4513,
+          roughness: 0.7,
+          metalness: 0.3,
+        });
+
+        const physicsMaterial = new CANNON.Material();
+
+        // Starting platform
+        createPlatform(0, 0.5, -5, 6, 1, 6, platformMaterial, physicsMaterial);
+
+        // Jump 1 - Forward jump
+        createPlatform(
+          0,
+          0.5,
+          -15,
+          4,
+          1,
+          4,
+          platformMaterial,
+          physicsMaterial,
+          1
+        );
+
+        // Jump 2 - Step up right
+        createPlatform(
+          8,
+          1.2,
+          -20,
+          4,
+          1,
+          4,
+          platformMaterial,
+          physicsMaterial,
+          2
+        );
+
+        // Jump 3 - Long jump forward
+        createPlatform(
+          16,
+          1.2,
+          -16,
+          4,
+          1,
+          4,
+          platformMaterial,
+          physicsMaterial,
+          3
+        );
+
+        // Jump 4 - Step up
+        createPlatform(
+          24,
+          2,
+          -12,
+          4,
+          1,
+          4,
+          platformMaterial,
+          physicsMaterial,
+          4
+        );
+
+        // Jump 5 - Side jump left
+        createPlatform(
+          18,
+          2.5,
+          -6,
+          3.5,
+          1,
+          3.5,
+          platformMaterial,
+          physicsMaterial,
+          5
+        );
+
+        // Jump 6 - Forward
+        createPlatform(
+          18,
+          2.5,
+          2,
+          4,
+          1,
+          4,
+          platformMaterial,
+          physicsMaterial,
+          6
+        );
+
+        // Jump 7 - Step up and right
+        createPlatform(
+          26,
+          3.5,
+          6,
+          3.5,
+          1,
+          3.5,
+          platformMaterial,
+          physicsMaterial,
+          7
+        );
+
+        // Jump 8 - Long jump left
+        createPlatform(
+          16,
+          4,
+          12,
+          4,
+          1,
+          4,
+          platformMaterial,
+          physicsMaterial,
+          8
+        );
+
+        // Jump 9 - Side jump
+        createPlatform(
+          8,
+          4.5,
+          16,
+          3.5,
+          1,
+          3.5,
+          platformMaterial,
+          physicsMaterial,
+          9
+        );
+
+        // Jump 10 - Forward jump
+        createPlatform(
+          0,
+          5,
+          20,
+          4,
+          1,
+          4,
+          platformMaterial,
+          physicsMaterial,
+          10
+        );
+
+        // Jump 11 - Precision jump right
+        createPlatform(
+          8,
+          5.5,
+          26,
+          3,
+          1,
+          3,
+          platformMaterial,
+          physicsMaterial,
+          11
+        );
+
+        // Jump 12 - Step up forward
+        createPlatform(
+          8,
+          6.5,
+          34,
+          4,
+          1,
+          4,
+          platformMaterial,
+          physicsMaterial,
+          12
+        );
+
+        // Jump 13 - Side jump left
+        createPlatform(
+          0,
+          7,
+          38,
+          3.5,
+          1,
+          3.5,
+          platformMaterial,
+          physicsMaterial,
+          13
+        );
+
+        // Jump 14 - Long forward jump
+        createPlatform(
+          0,
+          7.5,
+          48,
+          4,
+          1,
+          4,
+          platformMaterial,
+          physicsMaterial,
+          14
+        );
+
+        // Final platform - Victory!
+        createPlatform(
+          -8,
+          8.5,
+          54,
+          6,
+          1,
+          6,
+          platformMaterial,
+          physicsMaterial,
+          15
+        );
+      }
+
+      function createPlatform(
+        x,
+        y,
+        z,
+        width,
+        height,
+        depth,
+        material,
+        physicsMaterial,
+        checkpointNum = 0
+      ) {
+        // Visual platform
+        const geometry = new THREE.BoxGeometry(width, height, depth);
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(x, y, z);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        scene.add(mesh);
+
+        // Physics platform
+        const shape = new CANNON.Box(
+          new CANNON.Vec3(width / 2, height / 2, depth / 2)
+        );
+        const body = new CANNON.Body({ mass: 0, material: physicsMaterial });
+        body.addShape(shape);
+        body.position.set(x, y, z);
+        world.addBody(body);
+
+        // Checkpoint marker
+        if (checkpointNum > 0) {
+          const markerGeometry = new THREE.CylinderGeometry(0.5, 0.5, 3, 16);
+          const markerMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffd700,
+            emissive: 0xffd700,
+            emissiveIntensity: 0.5,
+          });
+          const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+          marker.position.set(x, y + height / 2 + 1.5, z);
+          marker.userData.checkpoint = checkpointNum;
+          marker.userData.collected = false;
+          scene.add(marker);
+        }
+      }
+
+      function onKeyDown(event) {
+        // F5 to toggle third person view (works even when course is completed)
+        if (event.code === "F5") {
+          event.preventDefault(); // Prevent page refresh
+          isThirdPerson = !isThirdPerson;
+          console.log("Third person view:", isThirdPerson);
+          return;
+        }
+
+        // Ignore all inputs if course is completed
+        if (courseCompleted) {
+          return;
+        }
+
+        keys[event.code] = true;
+
+        if (event.code === "ShiftLeft" || event.code === "ShiftRight") {
+          isSprinting = true;
+        }
+
+        // Handle space separately - only trigger once per press
+        if (event.code === "Space" && !event.repeat) {
+          event.preventDefault(); // Prevent page scrolling
+          if (canJump) {
+            playerBody.velocity.y = JUMP_VELOCITY;
+            canJump = false;
+            console.log("Jump!");
+          }
+        }
+      }
+
+      function onKeyUp(event) {
+        // Ignore all inputs if course is completed
+        if (courseCompleted) {
+          return;
+        }
+
+        keys[event.code] = false;
+
+        if (event.code === "ShiftLeft" || event.code === "ShiftRight") {
+          isSprinting = false;
+        }
+      }
+
+      function onMouseMove(event) {
+        if (document.pointerLockElement === document.body) {
+          euler.setFromQuaternion(camera.quaternion);
+
+          euler.y -= event.movementX * 0.002;
+          euler.x -= event.movementY * 0.002;
+
+          euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x));
+
+          camera.quaternion.setFromEuler(euler);
+        }
+      }
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+
+      function updatePlayer(delta) {
+        // Reset movement
+        moveForward = 0;
+        moveRight = 0;
+
+        // Check keys only if course is not completed
+        if (!courseCompleted) {
+          if (keys["KeyW"]) moveForward = -1;
+          if (keys["KeyS"]) moveForward = 1;
+          if (keys["KeyD"]) moveRight = 1;
+          if (keys["KeyA"]) moveRight = -1;
+        }
+
+        // Freeze all movement if course is completed
+        if (courseCompleted) {
+          playerBody.velocity.set(0, 0, 0);
+          playerBody.angularVelocity.set(0, 0, 0);
+        } else {
+          // Calculate movement direction
+          const speed = isSprinting ? SPRINT_SPEED : WALK_SPEED;
+
+          if (moveForward !== 0 || moveRight !== 0) {
+            direction.set(moveRight, 0, moveForward);
+            direction.normalize();
+            direction.applyQuaternion(camera.quaternion);
+            direction.y = 0;
+
+            // Normalize again after removing Y component to ensure consistent speed
+            const length = Math.sqrt(
+              direction.x * direction.x + direction.z * direction.z
+            );
+            if (length > 0) {
+              direction.x /= length;
+              direction.z /= length;
+            }
+
+            playerBody.velocity.x = direction.x * speed;
+            playerBody.velocity.z = direction.z * speed;
+          } else {
+            playerBody.velocity.x = 0;
+            playerBody.velocity.z = 0;
+          }
+        }
+
+        // Ground detection using raycast
+        const rayStart = new CANNON.Vec3(
+          playerBody.position.x,
+          playerBody.position.y,
+          playerBody.position.z
+        );
+        const rayEnd = new CANNON.Vec3(
+          playerBody.position.x,
+          playerBody.position.y - 1.2,
+          playerBody.position.z
+        );
+        const rayResult = new CANNON.RaycastResult();
+        world.rayTest(rayStart, rayEnd, rayResult);
+
+        // If ray hits something below us, we can jump
+        if (rayResult.hasHit) {
+          canJump = true;
+        } else if (playerBody.velocity.y > 0.1) {
+          // If we're going up, definitely can't jump
+          canJump = false;
+        }
+
+        // Update player mesh position
+        playerMesh.position.copy(playerBody.position);
+
+        // Body rotates only on Y axis (horizontal rotation)
+        playerMesh.rotation.y = euler.y;
+        playerMesh.rotation.x = 0;
+        playerMesh.rotation.z = 0;
+
+        // Head rotates on X axis (vertical up/down look)
+        playerHead.rotation.x = euler.x;
+        playerHair.rotation.x = euler.x;
+
+        // Animate arms and legs when moving
+        const isMoving = moveForward !== 0 || moveRight !== 0;
+        if (isMoving && !courseCompleted) {
+          // Update walk cycle
+          walkCycle += delta * 10;
+
+          // Swing arms and legs (opposite to each other)
+          const swingAngle = Math.sin(walkCycle) * 0.5;
+
+          // Arms swing opposite to legs
+          leftArm.rotation.x = swingAngle;
+          rightArm.rotation.x = -swingAngle;
+
+          // Legs swing
+          leftLeg.rotation.x = -swingAngle;
+          rightLeg.rotation.x = swingAngle;
+        } else {
+          // Reset to neutral position when not moving
+          leftArm.rotation.x = 0;
+          rightArm.rotation.x = 0;
+          leftLeg.rotation.x = 0;
+          rightLeg.rotation.x = 0;
+        }
+
+        // Update camera based on view mode
+        if (isThirdPerson) {
+          // Third person view - camera behind and above player
+          const cameraDistance = 5;
+          const cameraHeight = 2;
+
+          // Get camera direction from euler angles
+          const cameraOffset = new THREE.Vector3();
+          cameraOffset.set(
+            Math.sin(euler.y) * cameraDistance,
+            cameraHeight,
+            Math.cos(euler.y) * cameraDistance
+          );
+
+          camera.position.copy(playerBody.position);
+          camera.position.add(cameraOffset);
+          camera.position.y += 1; // Extra height
+
+          // Make player mesh visible in third person
+          playerMesh.visible = true;
+        } else {
+          // First person view - camera at player head
+          camera.position.copy(playerBody.position);
+          camera.position.y += 0.5;
+
+          // Hide player mesh in first person
+          playerMesh.visible = false;
+        }
+
+        // Check for checkpoints
+        scene.children.forEach((child) => {
+          if (child.userData.checkpoint && !child.userData.collected) {
+            const distance = playerBody.position.distanceTo(
+              new CANNON.Vec3(
+                child.position.x,
+                child.position.y,
+                child.position.z
+              )
+            );
+
+            if (distance < 3) {
+              child.userData.collected = true;
+              checkpoints = Math.max(checkpoints, child.userData.checkpoint);
+
+              // Make checkpoint disappear with animation
+              child.material.transparent = true;
+              let opacity = 1;
+              const fadeInterval = setInterval(() => {
+                opacity -= 0.05;
+                child.material.opacity = opacity;
+                if (opacity <= 0) {
+                  clearInterval(fadeInterval);
+                  scene.remove(child);
+                }
+              }, 30);
+
+              document.getElementById("checkpoint").textContent = checkpoints;
+
+              // Victory check
+              if (checkpoints === 15 && !courseCompleted) {
+                courseCompleted = true;
+                document.getElementById("victoryScreen").style.display = "block";
+
+                // Freeze player movement
+                playerBody.velocity.set(0, 0, 0);
+                playerBody.angularVelocity.set(0, 0, 0);
+              }
+            }
+          }
+        });
+
+        // Update best height
+        if (playerBody.position.y > bestHeight) {
+          bestHeight = playerBody.position.y;
+        }
+
+        // Update UI
+        const horizontalSpeed = Math.sqrt(
+          playerBody.velocity.x ** 2 + playerBody.velocity.z ** 2
+        ).toFixed(1);
+        document.getElementById("speed").textContent = horizontalSpeed;
+        document.getElementById("height").textContent =
+          playerBody.position.y.toFixed(1);
+        document.getElementById("bestHeight").textContent =
+          bestHeight.toFixed(1);
+
+        // Reset if fallen
+        if (playerBody.position.y < -10) {
+          playerBody.position.set(0, 1.5, -5);
+          playerBody.velocity.set(0, 0, 0);
+        }
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const delta = 1 / 60;
+        world.step(delta);
+
+        updatePlayer(delta);
+
+        renderer.render(scene, camera);
+      }
+
+      // Initialize on load
+      window.addEventListener("load", function () {
+        console.log("Window loaded, starting init...");
+        if (typeof THREE !== "undefined" && typeof CANNON !== "undefined") {
+          init();
+        } else {
+          console.error("Libraries not loaded:", {
+            THREE: typeof THREE,
+            CANNON: typeof CANNON,
+          });
+          document.body.innerHTML =
+            '<div style="color: white; padding: 20px;">Error: Required libraries did not load</div>';
+        }
+      });
+    </script>
+  </body>
+</html>
