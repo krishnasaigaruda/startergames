@@ -6,18 +6,21 @@ https://krishnasaigaruda.github.io/startergames/Games/index.html
 
 # Tag game
 A fun interactive tag game
+https://krishnasaigaruda.github.io/startergames/Games/Game1.html
+
 <img width="684" height="605" alt="image" src="https://github.com/user-attachments/assets/6a95074a-c77c-4845-b426-a7466ab8ada2" />
 
 # Rally Game
 A fun infinite car game
+https://krishnasaigaruda.github.io/startergames/Games/Game2.html
 <img width="1469" height="910" alt="image" src="https://github.com/user-attachments/assets/e8c7298c-5d93-4aee-b1bf-964dd973a9d6" />
 
 # Race Game
-
+https://krishnasaigaruda.github.io/startergames/Games/Game3.html
 <img width="1467" height="773" alt="image" src="https://github.com/user-attachments/assets/dcf3d5c6-c032-4c41-a797-0baef981c531" />
 
 # Parkour Game
-
+https://krishnasaigaruda.github.io/startergames/Games/Game4.html
 <img width="1387" height="717" alt="image" src="https://github.com/user-attachments/assets/b4c59a28-6aa2-43e0-a4b8-1a7f07463724" />
 
 
